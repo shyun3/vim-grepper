@@ -1264,10 +1264,6 @@ function! GrepperOperator(type) abort
   let flags.query_escaped = 0
 
   let flags.query = s:escape_query(flags, @@)
-  if s:get_current_tool_name(flags) != 'findstr'
-        \ && !flags.buffer && !flags.buffers
-    let flags.query = '-- '. flags.query
-  endif
   let @@ = regsave
 
   return s:start(flags)
