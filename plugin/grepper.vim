@@ -792,10 +792,10 @@ function! s:prompt(flags)
   let mapping_side = maparg(g:grepper.prompt_mapping_side, 'c', '', 1)
 
   " Set plugin-specific mappings
-  cnoremap <silent> <cr> <c-\>e<sid>set_prompt_op('cr')<cr><cr>
-  execute 'cnoremap <silent>' g:grepper.prompt_mapping_tool "\<c-\>e\<sid>set_prompt_op('flag_tool')<cr><cr>"
-  execute 'cnoremap <silent>' g:grepper.prompt_mapping_dir  "\<c-\>e\<sid>set_prompt_op('flag_dir')<cr><cr>"
-  execute 'cnoremap <silent>' g:grepper.prompt_mapping_side "\<c-\>e\<sid>set_prompt_op('flag_side')<cr><cr>"
+  cnoremap <silent> <buffer> <cr> <c-\>e<sid>set_prompt_op('cr')<cr><cr>
+  execute 'cnoremap <silent> <buffer>' g:grepper.prompt_mapping_tool "\<c-\>e\<sid>set_prompt_op('flag_tool')<cr><cr>"
+  execute 'cnoremap <silent> <buffer>' g:grepper.prompt_mapping_dir  "\<c-\>e\<sid>set_prompt_op('flag_dir')<cr><cr>"
+  execute 'cnoremap <silent> <buffer>' g:grepper.prompt_mapping_side "\<c-\>e\<sid>set_prompt_op('flag_side')<cr><cr>"
 
   " Set low timeout for key codes, so <esc> would cancel prompt faster
   let ttimeoutsave = &ttimeout
@@ -841,10 +841,10 @@ function! s:prompt(flags)
     redraw!
 
     " Restore mappings
-    cunmap <cr>
-    execute 'cunmap' g:grepper.prompt_mapping_tool
-    execute 'cunmap' g:grepper.prompt_mapping_dir
-    execute 'cunmap' g:grepper.prompt_mapping_side
+    cunmap <buffer> <cr>
+    execute 'cunmap <buffer>' g:grepper.prompt_mapping_tool
+    execute 'cunmap <buffer>' g:grepper.prompt_mapping_dir
+    execute 'cunmap <buffer>' g:grepper.prompt_mapping_side
     call s:restore_mapping(mapping_cr)
     call s:restore_mapping(mapping_tool)
     call s:restore_mapping(mapping_dir)
