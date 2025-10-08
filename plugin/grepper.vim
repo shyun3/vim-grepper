@@ -798,18 +798,20 @@ function! s:prompt(flags)
   execute 'cnoremap <silent> <buffer>' g:grepper.prompt_mapping_side "\<c-\>e\<sid>set_prompt_op('flag_side')<cr><cr>"
 
   if has('nvim')
-    let cmap_descs = {
-      \ '<cr>': 'Grepper: Start search',
-      \ g:grepper.prompt_mapping_tool : 'Grepper: Toggle -tool flag',
-      \ g:grepper.prompt_mapping_dir : 'Grepper: Toggle -dir flag',
-      \ g:grepper.prompt_mapping_side : 'Grepper: Toggle -side flag',
-      \ }
-    for [lhs, desc] in items(cmap_descs)
-      let mapping = maparg(lhs, 'c', '', 1)
-      let mapping.desc = desc
+    function! s:add_keymap_desc(lhs, desc)
+      if empty(a:lhs) | return | endif
 
+      let mapping = maparg(a:lhs, 'c', '', 1)
+      if empty(mapping) | return | endif
+
+      let mapping.desc = a:desc
       call mapset(mapping)
-    endfor
+    endfunction
+
+    call s:add_keymap_desc('<cr>', 'Grepper: Start search')
+    call s:add_keymap_desc(g:grepper.prompt_mapping_tool, 'Grepper: Toggle -tool flag')
+    call s:add_keymap_desc(g:grepper.prompt_mapping_dir, 'Grepper: Toggle -dir flag')
+    call s:add_keymap_desc(g:grepper.prompt_mapping_side, 'Grepper: Toggle -side flag')
   endif
 
   " Set low timeout for key codes, so <esc> would cancel prompt faster
