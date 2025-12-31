@@ -393,23 +393,30 @@ function! s:escape_cword(flags, cword)
   return shellescape(escaped_cword)
 endfunction
 
+function! s:normalize_path(path)
+  " See oil.nvim
+  return substitute(a:path, '^oil://\C', '', '')
+endfunction
+
 function! s:compute_working_directory(flags) abort
   if has_key(a:flags, 'cd')
     return a:flags.cd
   endif
+
+  let curr_file_dir = s:normalize_path(expand('%:p:h'))
   for dir in split(a:flags.dir, ',')
     if dir == 'repo'
       if s:get_current_tool_name(a:flags) == 'git'
         let dir = systemlist(printf('git -C %s rev-parse --show-toplevel',
-              \ shellescape(expand('%:p:h'))))
+              \ shellescape(curr_file_dir)))
         if !v:shell_error
           return dir[0]
         endif
       endif
       for repo in g:grepper.repo
-        let repopath = finddir(repo, expand('%:p:h').';')
+        let repopath = finddir(repo, curr_file_dir.';')
         if empty(repopath)
-          let repopath = findfile(repo, expand('%:p:h').';')
+          let repopath = findfile(repo, curr_file_dir.';')
         endif
         if !empty(repopath)
           let repopath = fnamemodify(repopath, ':h')
@@ -418,13 +425,11 @@ function! s:compute_working_directory(flags) abort
       endfor
     elseif dir == 'filecwd'
       let cwd = getcwd()
-      let bufdir = expand('%:p:h')
-      if stridx(bufdir, cwd) != 0
-        return fnameescape(bufdir)
+      if stridx(curr_file_dir, cwd) != 0
+        return fnameescape(curr_file_dir)
       endif
     elseif dir == 'file'
-      let bufdir = expand('%:p:h')
-      return fnameescape(bufdir)
+      return fnameescape(curr_file_dir)
     elseif dir == 'cwd'
       return getcwd()
     else
