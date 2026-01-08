@@ -1,3 +1,5 @@
+" Initialization {{{1
+
 if exists('g:loaded_grepper')
   finish
 endif
@@ -139,7 +141,8 @@ let s:slash   = exists('+shellslash') && !&shellslash ? '\' : '/'
 
 let s:git_column_flag_checked = 0
 
-" Job handlers
+" Job handlers {{{1
+" s:on_stdout_nvim() {{{2
 function! s:on_stdout_nvim(_job_id, data, _event) dict abort
   if !exists('s:id')
     return
@@ -178,6 +181,7 @@ function! s:on_stdout_nvim(_job_id, data, _event) dict abort
   endtry
 endfunction
 
+" s:on_stdout_vim() {{{2
 function! s:on_stdout_vim(_job_id, data) dict abort
   if !exists('s:id')
     return
@@ -197,6 +201,7 @@ function! s:on_stdout_vim(_job_id, data) dict abort
   endtry
 endfunction
 
+" s:on_exit() {{{2
 function! s:on_exit(...) dict abort
   execute 'tabnext' self.tabpage
   execute self.window .'wincmd w'
@@ -204,7 +209,8 @@ function! s:on_exit(...) dict abort
   return s:finish_up(self.flags)
 endfunction
 
-" Completion
+" Completion {{{1
+" grepper#complete() {{{2
 function! grepper#complete(lead, line, _pos) abort
   if a:lead =~ '^-'
     let flags = ['-append', '-buffer', '-buffers', '-cd', '-cword', '-dir',
@@ -226,6 +232,7 @@ function! grepper#complete(lead, line, _pos) abort
   endif
 endfunction
 
+" grepper#complete_files() {{{2
 function! grepper#complete_files(lead, _line, _pos)
   let [head, path] = s:extract_path(a:lead)
   " handle relative paths
@@ -240,6 +247,7 @@ function! grepper#complete_files(lead, _line, _pos)
   endif
 endfunction
 
+" s:extract_path() {{{2
 function! s:extract_path(string) abort
   let item = split(a:string, '.*\s\zs', 1)
   let len  = len(item)
@@ -253,12 +261,14 @@ function! s:extract_path(string) abort
   return [head, path]
 endfunction
 
-" Statusline
+" Statusline {{{1
+" #statusline() {{{2
 function! grepper#statusline() abort
   return s:cmdline
 endfunction
 
-" Helpers
+" Helpers {{{1
+" s:error() {{{2
 function! s:error(msg)
   redraw
   echohl ErrorMsg
@@ -266,10 +276,12 @@ function! s:error(msg)
   echohl NONE
 endfunction
 
+" s:lstrip() {{{2
 function! s:lstrip(string) abort
   return substitute(a:string, '^\s\+', '', '')
 endfunction
 
+" s:split_one() {{{2
 function! s:split_one(string) abort
   let stripped = s:lstrip(a:string)
   let first_word = substitute(stripped, '\v^(\S+).*', '\1', '')
@@ -277,18 +289,22 @@ function! s:split_one(string) abort
   return [first_word, rest]
 endfunction
 
+" s:next_tool() {{{2
 function! s:next_tool(flags)
   let a:flags.tools = a:flags.tools[1:-1] + [a:flags.tools[0]]
 endfunction
 
+" s:get_current_tool() {{{2
 function! s:get_current_tool(flags) abort
   return a:flags[a:flags.tools[0]]
 endfunction
 
+" s:get_current_tool_name() {{{2
 function! s:get_current_tool_name(flags) abort
   return a:flags.tools[0]
 endfunction
 
+" s:get_grepprg() {{{2
 function! s:get_grepprg(flags) abort
   let tool = s:get_current_tool(a:flags)
   if a:flags.buffers
@@ -303,16 +319,19 @@ function! s:get_grepprg(flags) abort
   return tool.grepprg
 endfunction
 
+" s:store_errorformat() {{{2
 function! s:store_errorformat(flags) abort
   let prog = s:get_current_tool(a:flags)
   let s:errorformat = &errorformat
   let &errorformat = has_key(prog, 'grepformat') ? prog.grepformat : &errorformat
 endfunction
 
+" s:restore_errorformat() {{{2
 function! s:restore_errorformat() abort
   let &errorformat = s:errorformat
 endfunction
 
+" s:restore_mapping() {{{2
 function! s:restore_mapping(mapping)
   if !empty(a:mapping)
     if has('nvim') && has_key(a:mapping, 'callback')
@@ -338,6 +357,7 @@ function! s:restore_mapping(mapping)
   endif
 endfunction
 
+" s:escape_query() {{{2
 function! s:escape_query(flags, query)
   let tool = s:get_current_tool(a:flags)
   let a:flags.query_escaped = 1
@@ -346,6 +366,7 @@ function! s:escape_query(flags, query)
         \ : a:query)
 endfunction
 
+" s:unescape_query() {{{2
 function! s:unescape_query(flags, query)
   let tool = s:get_current_tool(a:flags)
   let q = a:query
@@ -357,6 +378,7 @@ function! s:unescape_query(flags, query)
   return q
 endfunction
 
+" s:requote_query() {{{2
 function! s:requote_query(flags) abort
   if a:flags.cword
     let a:flags.query = s:escape_cword(a:flags, a:flags.query_orig)
@@ -374,6 +396,7 @@ function! s:requote_query(flags) abort
   endif
 endfunction
 
+" s:escape_cword() {{{2
 function! s:escape_cword(flags, cword)
   let tool = s:get_current_tool(a:flags)
   let escaped_cword = has_key(tool, 'escape')
@@ -398,6 +421,7 @@ function! s:normalize_path(path)
   return substitute(a:path, '^oil://\C', '', '')
 endfunction
 
+" s:compute_working_directory() {{{2
 function! s:compute_working_directory(flags) abort
   if has_key(a:flags, 'cd')
     return a:flags.cd
@@ -439,6 +463,7 @@ function! s:compute_working_directory(flags) abort
   return ''
 endfunction
 
+" s:chdir_push() {{{2
 function! s:chdir_push(work_dir)
   if !empty(a:work_dir)
     let cwd = getcwd()
@@ -448,12 +473,14 @@ function! s:chdir_push(work_dir)
   return ''
 endfunction
 
+" s:chdir_pop() {{{2
 function! s:chdir_pop(buf_dir)
   if !empty(a:buf_dir)
     execute 'lcd' fnameescape(a:buf_dir)
   endif
 endfunction
 
+" s:get_config() {{{2
 function! s:get_config() abort
   let g:grepper = exists('g:grepper')
         \ ? s:merge_configs(g:grepper, s:defaults)
@@ -465,6 +492,7 @@ function! s:get_config() abort
   return flags
 endfunction
 
+" s:set_prompt_text() {{{2
 function! s:set_prompt_text(flags) abort
   let text = get(a:flags, 'simple_prompt') ? '$t> ' : a:flags.prompt_text
   let text = substitute(text, '\V$t', s:get_current_tool_name(a:flags), '')
@@ -472,11 +500,13 @@ function! s:set_prompt_text(flags) abort
   return text
 endfunction
 
+" s:set_prompt_op() {{{2
 function! s:set_prompt_op(op) abort
   let s:prompt_op = a:op
   return getcmdline()
 endfunction
 
+" s:git_add_column_flag() {{{2
 function! s:git_add_column_flag(flags) abort
   if !empty(filter(copy(a:flags.tools), 'v:val == "git"'))
         \ && a:flags.git.grepprg == 'git grep -nI'
@@ -489,6 +519,7 @@ function! s:git_add_column_flag(flags) abort
   let s:git_column_flag_checked = 1
 endfunction
 
+" s:query2vimregexp() {{{2
 function! s:query2vimregexp(flags) abort
   if has_key(a:flags, 'query_orig')
     let query = a:flags.query_orig
@@ -559,6 +590,7 @@ function! s:query2vimregexp(flags) abort
 endfunction
 " }}}1
 
+" s:parse_flags() {{{1
 function! s:parse_flags(args) abort
   let flags = s:get_config()
   let flags.query = ''
@@ -646,6 +678,7 @@ function! s:parse_flags(args) abort
   return s:start(flags)
 endfunction
 
+" s:process_flags() {{{1
 function! s:process_flags(flags)
   if a:flags.stop == -1
     if exists('s:id')
@@ -725,6 +758,7 @@ function! s:process_flags(flags)
   return 0
 endfunction
 
+" s:start() {{{1
 function! s:start(flags) abort
   let s:prompt_op = ''
 
@@ -744,6 +778,7 @@ function! s:start(flags) abort
   return s:run(a:flags)
 endfunction
 
+" s:prompt() {{{1
 function! s:prompt(flags)
   let prompt_text = s:set_prompt_text(a:flags)
 
@@ -863,6 +898,7 @@ function! s:prompt(flags)
   endif
 endfunction
 
+" s:build_cmdline() {{{1
 function! s:build_cmdline(flags) abort
   let grepprg = s:get_grepprg(a:flags)
 
@@ -895,6 +931,7 @@ function! s:build_cmdline(flags) abort
   return grepprg
 endfunction
 
+" s:run() {{{1
 function! s:run(flags)
   if !a:flags.append
     if a:flags.quickfix
@@ -989,6 +1026,7 @@ function! s:run(flags)
   endif
 endfunction
 
+" s:finish_up() {{{1
 function! s:finish_up(flags)
   let qf = a:flags.quickfix
   let list = qf ? getqflist() : getloclist(0)
@@ -1050,15 +1088,18 @@ endfunction
 
 " }}}1
 
+" -side {{{1
 let s:filename_regexp = '\v^%(\>\>\>|\]\]\]) ([[:alnum:][:blank:]\/\-_.~]+):(\d+)'
 
 let s:error_marker = '!^@ERR '
 
+" s:side() {{{2
 function! s:side(flags) abort
   call s:side_create_window(a:flags)
   call s:side_buffer_settings()
 endfunction
 
+" s:side_create_window() {{{2
 function! s:side_create_window(flags) abort
   " Contexts are lists of a fixed format:
   "
@@ -1130,6 +1171,7 @@ function! s:side_create_window(flags) abort
   let &l:statusline = printf(' Found %d matches in %d files.', b:grepper_side_status.matches, b:grepper_side_status.files)
 endfunction
 
+" s:side_buffer_settings() {{{2
 function! s:side_buffer_settings() abort
   nnoremap <silent><buffer> q :bdelete<cr>
 
@@ -1170,11 +1212,13 @@ function! s:side_buffer_settings() abort
   highlight default link GrepperSideError ErrorMsg
 endfunction
 
+" s:side_context_next() {{{2
 function! s:context_next() abort
   call search(s:filename_regexp)
   call s:side_context_scroll_into_viewport()
 endfunction
 
+" s:side_context_previous() {{{2
 function! s:context_previous() abort
   call search(s:filename_regexp, 'bc')
   if line('.') == 1
@@ -1186,6 +1230,7 @@ function! s:context_previous() abort
   call search(s:filename_regexp, 'b')
 endfunction
 
+" s:side_context_scroll_into_viewport() {{{2
 function! s:side_context_scroll_into_viewport() abort
   redraw  " needed for line('w$')
   let next_context_line = search(s:filename_regexp, 'nW')
@@ -1203,6 +1248,7 @@ function! s:side_context_scroll_into_viewport() abort
   endif
 endfunction
 
+" s:side_context_jump() {{{2
 function! s:context_jump(close_window) abort
   let fileline = search(s:filename_regexp, 'bcn')
   if empty(fileline)
@@ -1220,6 +1266,7 @@ function! s:context_jump(close_window) abort
 endfunction
 " }}}1
 
+" Operator {{{1
 function! GrepperOperator(type) abort
   let regsave = @@
   let selsave = &selection
@@ -1244,6 +1291,7 @@ function! GrepperOperator(type) abort
   return s:start(flags)
 endfunction
 
+" Mappings {{{1
 nnoremap <silent> <plug>(GrepperOperator) :set opfunc=GrepperOperator<cr>g@
 xnoremap <silent> <plug>(GrepperOperator) :<c-u>call GrepperOperator(visualmode())<cr>
 
@@ -1251,6 +1299,7 @@ if hasmapto('<plug>(GrepperOperator)')
   silent! call repeat#set("\<plug>(GrepperOperator)", v:count)
 endif
 
+" Commands {{{1
 command! -nargs=* -complete=customlist,grepper#complete Grepper call <sid>parse_flags(<q-args>)
 
 for s:tool in g:grepper.tools
